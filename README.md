@@ -1,10 +1,6 @@
-# WorkSmart 1.0
+# WorkSmart 1.1
 
-
-
-A high-efficiency batch annotation tool for ultrasound imaging data.
-
-## 🚀 Part 1: Ultrasound Frame Annotator
+Work smarter, sleep earlier. 
 
 1. **Setup Environment:**
    ```bash
@@ -12,9 +8,11 @@ A high-efficiency batch annotation tool for ultrasound imaging data.
    conda activate WorkSmart
 2. **Run App:**
    ```bash
-    python app.py
+    python worksmart.py
 
-4. **Hotkeys:**
+## 🚀 Part 1: Ultrasound Frame Annotator
+
+1. **Hotkeys:**
    | Key | Action | 
    | :--- | :--- | 
    | **Space** | Play/Pause Video |
@@ -25,7 +23,22 @@ A high-efficiency batch annotation tool for ultrasound imaging data.
 
 Enable hotkeys by clicking on the ultrasound image to re-enable them.
 
-5. **Natvigation**
+2. **Natvigation**
     Use the "Go to" dropdown to skip to specific trials.
     When you reach the end, the app will automatically tell you if any trials were missed by checking the folder names inside the parent folder against the trials on the csv file. 
 
+## 🚀 Part 2: Trial judgment (avi)
+1. **Hotkeys:**
+   | Key | Action | 
+   | :--- | :--- | 
+   | **Space** | Play/Pause Video |
+   | **1** | Success |
+   | **0** | Failure |
+   | **R** | Return to Frame 0 |
+   | **Enter** | Submit Data & Load Next Trial |
+
+Enable hotkeys by clicking on the ultrasound image to re-enable them.
+
+2. **Natvigation**
+    Use the "Go to" dropdown to skip to specific trials.
+    When you reach the end, the app will automatically tell you if any trials were missed by checking the folder names inside the parent folder against the trials on the csv file. 
