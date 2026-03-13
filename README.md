@@ -10,7 +10,26 @@ Work smarter, sleep earlier.
    ```bash
     python worksmart.py
 
-## 🚀 Part 1: Ultrasound Frame Annotator
+## 🚀 Group Randomization
+
+Inputs needed: Name of groups, Project code, total number of subjects, output folder 
+
+Assign groups to subjects. Randomize using seed 24. Output to target folder as csv. 
+
+## 🚀 Trial Randomization
+
+Allowing creation of blocks and by block configuration of included trial types, output to target folder as csv. 
+
+## 🚀 Crop and Blind 
+
+Allowing cropping and blinding of avi files. 
+
+1. **Hotkeys:**
+   | Key | Action | 
+   | :--- | :--- | 
+   | **R** | Reset bounding box during crop | 
+
+## 🚀 Timestamper
 
 1. **Hotkeys:**
    | Key | Action | 
@@ -27,7 +46,7 @@ Enable hotkeys by clicking on the ultrasound image to re-enable them.
     Use the "Go to" dropdown to skip to specific trials.
     When you reach the end, the app will automatically tell you if any trials were missed by checking the folder names inside the parent folder against the trials on the csv file. 
 
-## 🚀 Part 2: Trial judgment (avi)
+## 🚀 Trial Judgment (avi)
 1. **Hotkeys:**
    | Key | Action | 
    | :--- | :--- | 

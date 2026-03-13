@@ -295,7 +295,7 @@ class UltrasoundAnnotator:
             return
 
         obs = self.txt_remarks.get().strip() or "nil"
-        row_data = {"Trial": os.path.basename(self.folder_path), **self.marks, "Remarks": obs, "recordtime": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        row_data = {"Trial": os.path.basename(self.folder_path), **self.marks, "Remarks": obs, "RecordTime": datetime.now().strftime("%Y-%m-%D %H:%M:%S")}
 
         try:
             with open(self.csv_path, 'a', newline='') as f:

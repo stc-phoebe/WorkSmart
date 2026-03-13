@@ -9,7 +9,7 @@ class WorkSmartHub:
     def __init__(self, root):
         self.root = root
         self.root.title("WorkSmart Research Suite")
-        self.root.geometry("500x550")
+        self.root.geometry("500x900")
         self.root.configure(bg="#f5f5f5")
 
         # --- Path Configuration ---
@@ -21,21 +21,22 @@ class WorkSmartHub:
         # --- Branding & Icon Section ---
         self.load_branding()
 
-        tk.Label(self.root, text="Select a Tool to Begin", font=("Arial", 11), bg="#f5f5f5", fg="#666").pack(pady=5)
+        tk.Label(self.root, text="Select a Tool to Begin", font=("Arial", 13), bg="#f5f5f5", fg="#666").pack(pady=5)
         
         # --- App Registry ---
         # Format: "Display Name": ("filename.py", ["required_package1", "required_package2"])
         self.apps = {
-            "Timestamper": ("timestamper.py", ["PIL"]),
-            "Group Randomization": ("grouprand.py", ["pandas", "numpy"]),
+            "Group Randomization": ("grouprand.py", ["numpy"]),
             "Trial Randomization": ("trialrand.py", ["pandas"]),
-            "Trial Judgement": ("judge.py", ["PIL"])
+            "Crop and Blind": ("cropandblind.py", ["numpy"]),
+            "Trial Judgement": ("judge.py", ["PIL"]),
+            "Timestamper": ("timestamper.py", ["PIL"]),
         }
 
         self.create_buttons()
 
         # Footer
-        tk.Label(self.root, text="v1.0 | Work Smart, Research Better", font=("Arial", 8), bg="#f5f5f5", fg="#aaa").pack(side="bottom", pady=15)
+        tk.Label(self.root, text="v1.0 | Work Smart, Play Hard", font=("Arial", 8), bg="#f5f5f5", fg="#aaa").pack(side="bottom", pady=15)
 
     def load_branding(self):
         """Loads the logo for the dashboard and sets the window icon."""
@@ -71,7 +72,7 @@ class WorkSmartHub:
                 text=app_name, 
                 width=28, 
                 height=2, 
-                font=("Arial", 10, "bold"),
+                font=("Arial", 12, "bold"),
                 bg="#ffffff",
                 fg="#333",
                 relief="flat",
