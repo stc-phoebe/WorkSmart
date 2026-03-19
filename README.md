@@ -4,43 +4,47 @@ Work smarter, play harder.
 
 ## **Quick Setup (for mac)**
 
-(1) Download the Project
+1. Download the Project
 Scroll to the top of this GitHub page.
 Click the green "<> Code" button.
 Select "Download ZIP".
 Find the downloaded folder in your computer, right-click it, and select "Extract All". Move this extracted folder to a permanent spot (like your Documents folder).
 
-(2) Install Python & Conda
+2. Install Python & Conda
 The app needs a specific "environment" to run properly.
 Open your terminal (Command Prompt on Windows, or Terminal on Mac).
 Navigate to the folder you just extracted:
-Bash
+
+```bash
 cd (copy your folder path here)
-
-Create the environment using the provided file:
-Bash
+```
+   Create the environment using the provided file:
+```bash
 conda env create -f environment.yml
-
-(3) Create a Desktop Shortcut
+```
+3. Create a Desktop Shortcut
 Instead of typing code every time, let's make a "Double-Click" icon for your desktop.
 
 For Mac Users:
 
-Open the Automator app (found in Applications).
+1. Open the Automator app (found in Applications).
+2. Select New Document > Application.
+3. Search for "Run Shell Script" and drag it into the window.
+4. Paste the following inside (adjust the path to your folder):
+```bash
+   source ~/anaconda3/bin/activate WorkSmart
+   python ~/Documents/WorkSmart/apps/timestamper/timestamper.py
+```
+5. Save it to your Desktop as "WorkSmart Timestamper".
+6. Launch: Double-click your new desktop icon.
 
-Select New Document > Application.
-
-Search for "Run Shell Script" and drag it into the window.
-
-Paste the following inside (adjust the path to your folder):
-
-Bash
-source ~/anaconda3/bin/activate WorkSmart
-python ~/Documents/WorkSmart/apps/timestamper/timestamper.py
-Save it to your Desktop as "WorkSmart Timestamper".
-
-(4) How to Use
-Launch: Double-click your new desktop icon.
+### Launch from terminal (run line by line): 
+  ```bash
+   cd (your worksmart folder)
+   conda env create -f environment.yml 
+   conda activate WorkSmart 
+   python main.py
+```
 
 ## 🚀 Group Randomization
 
