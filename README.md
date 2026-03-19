@@ -2,7 +2,7 @@
 
 Work smarter, play harder.
 
-0. **Quick Setup (for mac)**
+## **Quick Setup (for mac)**
 
 (1) Download the Project
 Scroll to the top of this GitHub page.
@@ -61,17 +61,17 @@ Allowing cropping and blinding of avi files.
    | :--- | :--- | 
    | **R** | Reset bounding box during crop | 
 
-## 🚀 Timestamper
+## 🚀 Timestamper (png, one trial = one folder of pngs)
 0. **Project Setup**
 Create a new project configuration for your own project timestamping needs:
-| Configs | Action | 
-| :--- | :--- | 
-| Project name | Name of the project, save as json that can be reopened when you reopen app next time. | 
-| Timestamps | Allowing maximum of ten, comma separated. Auto assigning hotkeys 1-9 and 0. | 
-| Var | Text input variables for project, comma separated. Auto input "nil" if none is typed in. | 
-| FPS | Frame per second, can roughly set align with dataset for easy play/pause. |
-| Parent folder | The folder that you store all folders of pngs. | 
-| Output csv | Where you store the data. | 
+   | Configs | Action | 
+   | :--- | :--- | 
+   | Project name | Name of the project, save as json that can be reopened when you reopen app next time. | 
+   | Timestamps | Allowing maximum of ten, comma separated. Auto assigning hotkeys 1-9 and 0. | 
+   | Var | Text input variables for project, comma separated. Auto input "nil" if none is typed in. | 
+   | FPS | Frame per second, can roughly set align with dataset for easy play/pause. |
+   | Parent folder | The folder that you store all folders of pngs. | 
+   | Output csv | Where you store the data. | 
 
 1. **Hotkeys:**
    | Key | Action | 
