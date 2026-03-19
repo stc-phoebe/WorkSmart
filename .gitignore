@@ -1,0 +1,25 @@
+# --- Main Folder ---
+# Ignore the backup folder and all its contents
+backup/
+
+# --- Timestamper Specific ---
+# Ignore all project JSON configuration files
+apps/timestamper/projects/*.json
+
+# Ignore the environment info text file (optional)
+apps/timestamper/env_info.txt
+
+# --- Data & Output ---
+# Ignore any CSV files generated as output
+*.csv
+
+# --- Python & OS Garbage ---
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
+
+# --- Virtual Environments ---
+.venv/
+env/
+venv/

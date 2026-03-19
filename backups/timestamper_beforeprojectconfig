@@ -1,0 +1,339 @@
+import os
+import csv
+import json # Added for config storage
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+from PIL import Image, ImageTk
+from datetime import datetime
+
+class UltrasoundAnnotator:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Ultrasound Timeframe Stamping - WORKSMART")
+        
+        # --- Path for Config Storage ---
+        self.base_path = os.path.dirname(os.path.abspath(__file__))
+        self.config_file = os.path.join(self.base_path, "timestamper_config.json")
+
+        # --- Intercept the Close Button (X) ---
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        # Data State
+        self.parent_folder = ""
+        self.trial_folders = []
+        self.current_trial_idx = 0 # This will now be restored from config
+        self.folder_path = ""
+        self.csv_path = ""
+        self.images = []
+        self.current_idx = 0
+        self.is_playing = False
+        
+        self.mark_keys = ["GH_on", "GH_Max", "GH_off", "TB_on", "TB_Max", "TB_Off"]
+        self.marks = {key: "" for key in self.mark_keys}
+        self.fieldnames = ["Trial"] + self.mark_keys + ["Remarks"] + ["RecordTime"]
+
+        self.setup_ui()
+        self.setup_hotkeys()
+        
+        # --- AUTO LOAD CONFIG ON START ---
+        self.load_config()
+
+    def on_closing(self):
+        """Saves current progress before the window actually destroys."""
+        self.save_config()
+        self.root.destroy()
+
+    def save_config(self):
+        """Saves folders, CSV path, and the specific Trial Index."""
+        config_data = {
+            "parent_folder": self.parent_folder,
+            "csv_path": self.csv_path,
+            "last_trial_idx": self.current_trial_idx # NEW: Save progress
+        }
+        try:
+            with open(self.config_file, "w") as f:
+                json.dump(config_data, f)
+        except Exception as e:
+            print(f"Failed to save config: {e}")
+
+    def load_config(self):
+        """Restores the session including the last trial folder worked on."""
+        if os.path.exists(self.config_file):
+            try:
+                with open(self.config_file, "r") as f:
+                    config = json.load(f)
+                
+                # Restore Parent Folder & Trials
+                if config.get("parent_folder") and os.path.exists(config["parent_folder"]):
+                    self.parent_folder = config["parent_folder"]
+                    
+                    # Instead of refresh_parent_data (which resets to 0), 
+                    # we load the list and apply the saved index
+                    dirs = [d for d in os.listdir(self.parent_folder) if os.path.isdir(os.path.join(self.parent_folder, d))]
+                    dirs.sort()
+                    if dirs:
+                        self.lbl_parent.config(text=f"Project: {os.path.basename(self.parent_folder)}")
+                        self.trial_folders = [os.path.join(self.parent_folder, d) for d in dirs]
+                        self.trial_selector['values'] = dirs
+                        
+                        # Apply the saved index
+                        saved_idx = config.get("last_trial_idx", 0)
+                        if 0 <= saved_idx < len(self.trial_folders):
+                            self.current_trial_idx = saved_idx
+                        
+                        self.load_current_trial()
+                
+                # Restore CSV Path
+                if config.get("csv_path") and os.path.exists(config["csv_path"]):
+                    self.csv_path = config["csv_path"]
+
+            except Exception as e:
+                print(f"Failed to load config: {e}")
+
+    def setup_ui(self):
+        # ... (Keep your existing UI code exactly as is)
+        file_frame = tk.Frame(self.root)
+        file_frame.pack(pady=10, fill="x", padx=10)
+
+        tk.Button(file_frame, text="Parent Folder", command=self.load_parent_folder).pack(side="left", padx=2)
+        tk.Button(file_frame, text="Select CSV", command=self.load_csv).pack(side="left", padx=2)
+        tk.Button(file_frame, text="Create CSV", command=self.create_new_csv).pack(side="left", padx=2)
+        
+        tk.Label(file_frame, text=" | Go to:").pack(side="left", padx=5)
+        self.trial_selector = ttk.Combobox(file_frame, state="readonly", width=20)
+        self.trial_selector.pack(side="left", padx=5)
+        self.trial_selector.bind("<<ComboboxSelected>>", self.jump_to_trial)
+
+        self.lbl_progress = tk.Label(file_frame, text="Progress: 0/0", font=('Arial', 10))
+        self.lbl_progress.pack(side="right", padx=10)
+
+        info_frame = tk.Frame(self.root, bg="#f0f0f0")
+        info_frame.pack(fill="x", padx=10, pady=2)
+        
+        self.lbl_parent = tk.Label(info_frame, text="Project: None", font=('Arial', 10), bg="#f0f0f0")
+        self.lbl_parent.pack(side="left", padx=5)
+        
+        tk.Label(info_frame, text=" > ", font=('Arial', 10), bg="#f0f0f0").pack(side="left")
+        
+        self.lbl_trial = tk.Label(info_frame, text="Current Trial: None", font=('Arial', 10, 'bold'), fg="darkgreen", bg="#f0f0f0")
+        self.lbl_trial.pack(side="left")
+
+        self.canvas = tk.Label(self.root, bg="black", width=800, height=600)
+        self.canvas.pack(pady=5)
+        self.canvas.bind("<Button-1>", lambda e: self.root.focus_set())
+
+        nav_frame = tk.Frame(self.root)
+        nav_frame.pack(fill="x", padx=10)
+
+        self.btn_play = tk.Button(nav_frame, text="▶ Play (Space)", width=15, command=self.toggle_play)
+        self.btn_play.pack(side="left", padx=5)
+
+        self.slider = tk.Scale(nav_frame, from_=0, to=100, orient="horizontal", command=self.on_slider_move)
+        self.slider.pack(side="left", fill="x", expand=True, padx=5)
+
+        self.lbl_frame_num = tk.Label(nav_frame, text="Frame: 000", font=('Courier', 12))
+        self.lbl_frame_num.pack(side="left", padx=10)
+
+        anno_frame = tk.Frame(self.root)
+        anno_frame.pack(pady=10)
+
+        self.mark_labels = {}
+        for i, key in enumerate(self.mark_keys, 1):
+            btn_subframe = tk.Frame(anno_frame)
+            btn_subframe.pack(side="left", padx=5)
+            tk.Button(btn_subframe, text=f"Mark {key}\n({i})", width=12, command=lambda k=key: self.set_mark(k)).pack()
+            self.mark_labels[key] = tk.Label(btn_subframe, text="-", fg="blue")
+            self.mark_labels[key].pack()
+
+        bottom_frame = tk.Frame(self.root)
+        bottom_frame.pack(pady=10, fill="x", padx=10)
+
+        tk.Label(bottom_frame, text="Observations:").pack(side="left")
+        self.txt_remarks = tk.Entry(bottom_frame)
+        self.txt_remarks.pack(side="left", fill="x", expand=True, padx=10)
+
+        tk.Button(bottom_frame, text="SKIP TRIAL", bg="#ff9800", command=self.skip_trial, width=12).pack(side="left", padx=5)
+        tk.Button(bottom_frame, text="SUBMIT & NEXT", bg="#00ace6", fg="white", command=self.submit_data, width=15, height=2).pack(side="right")
+
+    # --- UPDATED LOGIC METHODS ---
+
+    def load_parent_folder(self):
+        folder = filedialog.askdirectory()
+        if folder:
+            self.parent_folder = folder
+            self.refresh_parent_data()
+            self.save_config()
+
+    def refresh_parent_data(self):
+        """Internal helper to populate trial list from parent folder."""
+        dirs = [d for d in os.listdir(self.parent_folder) if os.path.isdir(os.path.join(self.parent_folder, d))]
+        dirs.sort()
+        if not dirs:
+            return
+        
+        self.lbl_parent.config(text=f"Project: {os.path.basename(self.parent_folder)}")
+        self.trial_folders = [os.path.join(self.parent_folder, d) for d in dirs]
+        self.trial_selector['values'] = dirs
+        self.current_trial_idx = 0
+        self.load_current_trial()
+
+    def load_csv(self):
+        path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+        if path:
+            self.csv_path = path
+            self.save_config()
+            messagebox.showinfo("Success", f"Recording to: {os.path.basename(path)}")
+
+    def create_new_csv(self):
+        new_file = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+        if new_file:
+            try:
+                with open(new_file, 'w', newline='') as f:
+                    writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                    writer.writeheader()
+                self.csv_path = new_file
+                self.save_config()
+                messagebox.showinfo("Success", f"Created: {os.path.basename(new_file)}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Could not create file: {e}")
+
+    # ... (Keep existing setup_hotkeys, handle_hotkeys, load_current_trial, etc.)
+    def setup_hotkeys(self):
+        self.root.bind("<space>", self.handle_hotkeys)
+        self.root.bind("<Left>", self.handle_hotkeys)
+        self.root.bind("<Right>", self.handle_hotkeys)
+        self.root.bind("<Return>", self.handle_hotkeys)
+        self.root.bind("r", self.handle_hotkeys)
+        self.root.bind("R", self.handle_hotkeys)
+        for i in range(1, 7):
+            self.root.bind(str(i), self.handle_hotkeys)
+    
+    def handle_hotkeys(self, event):
+        if self.root.focus_get() == self.txt_remarks: return
+        key = event.keysym
+        if key == 'space': self.toggle_play()
+        elif key in ['r', 'R']: self.jump_to_start()
+        elif key == 'Return': self.submit_data()
+        elif key == 'Left': self.step_frame(-1)
+        elif key == 'Right': self.step_frame(1)
+        elif key in ['1', '2', '3', '4', '5', '6']:
+            idx = int(key) - 1
+            mark_key = self.mark_keys[idx]
+            self.set_mark(mark_key)
+
+    def jump_to_trial(self, event=None):
+        selection = self.trial_selector.get()
+        if selection in [os.path.basename(d) for d in self.trial_folders]:
+            self.current_trial_idx = [os.path.basename(d) for d in self.trial_folders].index(selection)
+            self.load_current_trial()
+
+    def jump_to_start(self):
+        if self.images:
+            self.current_idx = 0
+            self.show_image()
+
+    def load_current_trial(self):
+        if 0 <= self.current_trial_idx < len(self.trial_folders):
+            self.folder_path = self.trial_folders[self.current_trial_idx]
+            files = [f for f in os.listdir(self.folder_path) if f.lower().endswith('.png')]
+            files.sort()
+            self.images = files
+            trial_name = os.path.basename(self.folder_path)
+            self.lbl_trial.config(text=f"Current Trial: {trial_name}")
+            self.trial_selector.set(trial_name)
+            self.lbl_progress.config(text=f"Progress: {self.current_trial_idx + 1}/{len(self.trial_folders)}")
+            self.slider.config(to=len(self.images)-1 if self.images else 0)
+            self.current_idx = 0
+            self.reset_form()
+            self.show_image()
+        else:
+            self.check_completion_status()
+
+    def check_completion_status(self):
+        if not self.csv_path or not self.trial_folders: return
+        recorded_trials = set()
+        try:
+            with open(self.csv_path, 'r', newline='') as f:
+                reader = csv.DictReader(f)
+                for row in reader: recorded_trials.add(row["Trial"])
+        except: pass
+        all_trial_names = [os.path.basename(d) for d in self.trial_folders]
+        missing_trials = [name for name in all_trial_names if name not in recorded_trials]
+        if not missing_trials:
+            messagebox.showinfo("Status", "🎉 All trials COMPLETED!")
+        else:
+            messagebox.showwarning("Incomplete", f"Missing Records for {len(missing_trials)} trials.")
+
+    def skip_trial(self):
+        if messagebox.askyesno("Skip", "Move to next trial without saving?"):
+            self.current_trial_idx += 1
+            self.load_current_trial()
+
+    def show_image(self):
+        if not self.images: return
+        img_name = self.images[self.current_idx]
+        img_path = os.path.join(self.folder_path, img_name)
+        clean_name = os.path.splitext(img_name)[0]
+        img = Image.open(img_path).resize((800, 600), Image.Resampling.LANCZOS)
+        self.photo = ImageTk.PhotoImage(img)
+        self.canvas.config(image=self.photo)
+        self.lbl_frame_num.config(text=f"Frame: {clean_name}")
+        self.slider.set(self.current_idx)
+
+    def step_frame(self, direction):
+        new_idx = self.current_idx + direction
+        if 0 <= new_idx < len(self.images):
+            self.current_idx = new_idx
+            self.show_image()
+
+    def on_slider_move(self, val):
+        self.current_idx = int(val)
+        self.show_image()
+
+    def toggle_play(self):
+        if not self.images: return
+        self.is_playing = not self.is_playing
+        self.btn_play.config(text="⏸ Pause (Space)" if self.is_playing else "▶ Play (Space)")
+        if self.is_playing: self.play_loop()
+
+    def play_loop(self):
+        if self.is_playing and self.current_idx < len(self.images) - 1:
+            self.current_idx += 1
+            self.show_image()
+            self.root.after(33, self.play_loop)
+        else:
+            self.is_playing = False
+            self.btn_play.config(text="▶ Play (Space)")
+
+    def set_mark(self, key):
+        if not self.images: return
+        clean_name = os.path.splitext(self.images[self.current_idx])[0]
+        self.marks[key] = clean_name
+        self.mark_labels[key].config(text=clean_name)
+
+    def submit_data(self):
+        if not self.csv_path or not self.folder_path:
+            messagebox.showerror("Error", "Select Folder and CSV first!")
+            return
+        obs = self.txt_remarks.get().strip() or "nil"
+        row_data = {"Trial": os.path.basename(self.folder_path), **self.marks, "Remarks": obs, "RecordTime": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        try:
+            with open(self.csv_path, 'a', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=self.fieldnames)
+                writer.writerow(row_data)
+            self.current_trial_idx += 1
+            self.load_current_trial()
+        except Exception as e:
+            messagebox.showerror("File Error", f"Error: {e}")
+        self.root.focus_set()
+
+    def reset_form(self):
+        for key in self.marks:
+            self.marks[key] = ""
+            self.mark_labels[key].config(text="-")
+        self.txt_remarks.delete(0, tk.END)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = UltrasoundAnnotator(root)
+    root.mainloop()

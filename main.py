@@ -30,7 +30,7 @@ class WorkSmartHub:
             "Trial Randomization": ("trialrand.py", ["pandas"]),
             "Crop and Blind": ("cropandblind.py", ["numpy"]),
             "Trial Judgement": ("judge.py", ["PIL"]),
-            "Timestamper": ("timestamper.py", ["PIL"]),
+            "Timestamper": ("timestamper/timestamper.py", ["PIL"]),
         }
 
         self.create_buttons()

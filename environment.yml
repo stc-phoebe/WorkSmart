@@ -1,13 +1,15 @@
 name: WorkSmart
 channels:
+  - conda-forge
   - defaults
-  - conda-forge 
 dependencies:
   - python=3.10
   - tk
+  - tcl
   - opencv
   - pandas
   - numpy
+  - ghostscript  # Helps Pillow handle postscript/vector rendering if needed
   - pip:
       - pillow==12.1.1
 prefix: /Users/fib./anaconda3/envs/WorkSmart
