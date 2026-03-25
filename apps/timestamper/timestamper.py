@@ -249,11 +249,27 @@ class UltrasoundAnnotator:
     def load_current_trial(self):
         if 0 <= self.current_trial_idx < len(self.trial_folders):
             self.folder_path = self.trial_folders[self.current_trial_idx]
-            self.images = sorted([f for f in os.listdir(self.folder_path) if f.lower().endswith('.png')])
+            
+            # --- UPDATED FILTER LOGIC ---
+            # This ignores hidden files (._), temp files (~), and non-images
+            self.images = sorted([
+                f for f in os.listdir(self.folder_path) 
+                if f.lower().endswith('.png') 
+                and not f.startswith('.') 
+                and not f.startswith('~')
+            ])
+            
+            if not self.images:
+                messagebox.showwarning("Empty Folder", f"No valid PNG images found in:\n{self.folder_path}")
+                return
+
             self.trial_selector.set(os.path.basename(self.folder_path))
             self.lbl_prog_side.config(text=f"{self.current_trial_idx+1} / {len(self.trial_folders)}")
-            self.slider.config(to=len(self.images)-1 if self.images else 0); self.current_idx = 0; self.reset_form(); self.show_image()
-
+            self.slider.config(to=len(self.images)-1)
+            self.current_idx = 0
+            self.reset_form()
+            self.show_image()
+            
     def on_slider_move(self, v): self.current_idx = int(v); self.show_image()
     def toggle_play(self):
         self.is_playing = not self.is_playing
