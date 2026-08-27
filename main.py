@@ -31,6 +31,7 @@ class WorkSmartHub:
             "Crop and Blind": ("cropandblind.py", ["numpy"]),
             "Trial Judgement": ("judge.py", ["PIL"]),
             "Timestamper": ("timestamper/timestamper.py", ["PIL"]),
+            "Barcode Generator": ("barcode_generator.py", ["barcode"]),
         }
 
         self.create_buttons()

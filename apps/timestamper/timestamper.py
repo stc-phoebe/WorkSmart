@@ -91,10 +91,44 @@ class UltrasoundAnnotator:
         main_container = tk.Frame(self.root)
         main_container.pack(fill="both", expand=True)
 
-        self.sidebar = tk.Frame(main_container, width=350, padx=10, borderwidth=1, relief="sunken")
-        self.sidebar.pack(side="right", fill="y")
-        self.sidebar.pack_propagate(False)
+      # --- SCROLLABLE SIDEBAR SETUP ---
+        # 1. Outer container for sidebar
+        sidebar_container = tk.Frame(main_container, width=350)
+        sidebar_container.pack(side="right", fill="y")
+        sidebar_container.pack_propagate(False)
 
+        # 2. Scrollbar
+        scrollbar = tk.Scrollbar(sidebar_container, orient="vertical")
+        scrollbar.pack(side="right", fill="y")
+
+        # 3. Canvas that will hold the content
+        self.sidebar_canvas = tk.Canvas(sidebar_container, width=350, bd=0, highlightthickness=0)
+        self.sidebar_canvas.pack(side="left", fill="both", expand=True)
+
+        # 4. The actual Frame that holds your widgets
+        self.sidebar = tk.Frame(self.sidebar_canvas)
+        
+        # Create a window inside the canvas to hold the sidebar frame
+        self.sidebar_window = self.sidebar_canvas.create_window((0, 0), window=self.sidebar, anchor="nw")
+
+        # 5. Link Canvas and Scrollbar
+        self.sidebar_canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.config(command=self.sidebar_canvas.yview)
+
+        # 6. Bind resizing to update scroll region
+        def on_sidebar_configure(event):
+            # Update scroll region to encompass the inner frame
+            self.sidebar_canvas.configure(scrollregion=self.sidebar_canvas.bbox("all"))
+            # Ensure the frame stays the width of the canvas
+            self.sidebar_canvas.itemconfig(self.sidebar_window, width=event.width)
+
+        self.sidebar.bind("<Configure>", on_sidebar_configure)
+        
+        # Allow mousewheel scrolling
+        def _on_mousewheel(event):
+            self.sidebar_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        self.sidebar_canvas.bind_all("<MouseWheel>", _on_mousewheel) # Windows/macOS
         self.left_pane = tk.Frame(main_container)
         self.left_pane.pack(side="left", fill="both", expand=True)
 
@@ -108,13 +142,13 @@ class UltrasoundAnnotator:
         self.btn_play.pack(side="left")
         self.slider = tk.Scale(nav_frame, from_=0, to=100, orient="horizontal", command=self.on_slider_move)
         self.slider.pack(side="left", fill="x", expand=True, padx=5)
-        self.lbl_frame = tk.Label(nav_frame, text="F: 0", font=("Courier", 10)); self.lbl_frame.pack(side="left")
+        self.lbl_frame = tk.Label(nav_frame, text="F: 0", font=("Arial", 10)); self.lbl_frame.pack(side="left")
 
         self.trial_selector = ttk.Combobox(self.sidebar, state="readonly"); self.trial_selector.pack(fill="x", pady=(10, 2))
         self.trial_selector.bind("<<ComboboxSelected>>", self.jump_to_trial)
         
-        tk.Button(self.sidebar, text="Select Parent Folder", command=self.load_parent_folder, font=("Arial", 8)).pack(fill="x", pady=2)
-        tk.Button(self.sidebar, text="Select Output CSV", command=self.load_csv, font=("Arial", 8)).pack(fill="x", pady=2)
+        tk.Button(self.sidebar, text="Select Parent Folder", command=self.load_parent_folder, font=("Arial", 10)).pack(fill="x", pady=2)
+        tk.Button(self.sidebar, text="Select Output CSV", command=self.load_csv, font=("Arial", 10)).pack(fill="x", pady=2)
 
         self.custom_container = tk.LabelFrame(self.sidebar, text="Custom Variables", padx=5, pady=5)
         self.custom_container.pack(fill="x", pady=10)
@@ -122,13 +156,13 @@ class UltrasoundAnnotator:
         self.marker_container = tk.LabelFrame(self.sidebar, text="Timestamp Categories", padx=5, pady=5)
         self.marker_container.pack(fill="x", pady=10)
 
-        tk.Label(self.sidebar, text="Observations:", font=("Arial", 9, "bold")).pack(anchor="w")
+        tk.Label(self.sidebar, text="Observations:", font=("Arial", 10, "bold")).pack(anchor="w")
         self.txt_remarks = tk.Entry(self.sidebar, font=("Arial", 10))
         self.txt_remarks.pack(fill="x", pady=5)
 
         btn_f = tk.Frame(self.sidebar)
         btn_f.pack(fill="x", pady=15)
-        tk.Button(btn_f, text="SKIP", bg="#e74c3c", fg="white", font=("Arial", 10), command=self.skip_trial).pack(side="left", fill="x", expand=True, padx=(0,5))
+        tk.Button(btn_f, text="SKIP", bg="#27ae60", fg="white", font=("Arial", 11), command=self.skip_trial).pack(side="left", fill="x", expand=True, padx=(0,5))
         tk.Button(btn_f, text="SUBMIT", bg="#27ae60", fg="white", font=("Arial", 11, "bold"), height=2, command=self.submit_data).pack(side="left", fill="x", expand=True)
         
         self.lbl_prog_side = tk.Label(self.sidebar, text="0/0", font=("Arial", 14, "bold"))
@@ -153,7 +187,7 @@ class UltrasoundAnnotator:
             for i in range(4):
                 f = tk.Frame(self.cfg_ribbon, bg="#ecf0f1")
                 f.pack(fill="x", pady=2)
-                tk.Label(f, text=row_labels[i], width=12, anchor="w", bg="#ecf0f1", font=("Arial", 8, "bold")).pack(side="left")
+                tk.Label(f, text=row_labels[i], width=12, anchor="w", bg="#ecf0f1", font=("Arial", 10, "bold")).pack(side="left")
                 ent = tk.Entry(f); ent.pack(side="left", fill="x", expand=True, padx=5)
                 ent.insert(0, ", ".join(self.mark_rows[i]))
                 self.row_entries.append(ent)
@@ -182,7 +216,7 @@ class UltrasoundAnnotator:
             if not row_content: continue
             
             # Category Header
-            tk.Label(self.marker_container, text=f"Category {r_idx+1}", font=("Arial", 7, "bold"), fg="grey").pack(anchor="w", pady=(5,0))
+            tk.Label(self.marker_container, text=f"Category {r_idx+1}", font=("Arial", 10, "bold"), fg="grey").pack(anchor="w", pady=(5,0))
             
             for c_idx, key in enumerate(row_content):
                 if c_idx >= 10: break
@@ -195,14 +229,17 @@ class UltrasoundAnnotator:
                                 anchor="w", command=lambda k=key: self.set_mark(k))
                 btn.pack(side="left", fill="x", expand=True)
                 
-                self.mark_labels[key] = tk.Label(f, text="-", fg="blue", width=8, font=("Arial", 8))
+                self.mark_labels[key] = tk.Label(f, text="-", fg="blue", width=8, font=("Arial", 10))
                 self.mark_labels[key].pack(side="right")
 
         self.custom_entries = {}
         for field in self.custom_field_names:
             f = tk.Frame(self.custom_container); f.pack(fill="x", pady=1)
-            tk.Label(f, text=f"{field}:", font=("Arial", 8)).pack(anchor="w")
-            ent = tk.Entry(f, font=("Arial", 9)); ent.pack(fill="x"); self.custom_entries[field] = ent
+            tk.Label(f, text=f"{field}:", font=("Arial", 10)).pack(anchor="w")
+            ent = tk.Entry(f, font=("Arial", 10)); ent.pack(fill="x"); self.custom_entries[field] = ent
+
+        self.sidebar.update_idletasks()
+        self.sidebar_canvas.configure(scrollregion=self.sidebar_canvas.bbox("all"))
 
     def setup_hotkeys(self):
         for k in ["<space>", "<Left>", "<Right>", "<Return>"]: self.root.unbind(k)
