@@ -52,11 +52,7 @@ cd "/full/path/to/WorkSmart"
 
 Replace `/full/path/to/WorkSmart` with the actual folder path.
 
-Before creating the environment, open `environment.yml`. If it contains the following machine-specific line, remove that line so the environment can be installed on your own computer:
-
-```yaml
-prefix: /Users/fib./anaconda3/envs/WorkSmart
-```
+Before creating the environment, open `environment.yml`. 
 
 Create the environment using the provided file:
 
