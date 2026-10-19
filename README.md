@@ -1,4 +1,4 @@
-# WorkSmart 1.3
+# WorkSmart 1.2
 
 Work smarter, play harder.
 
