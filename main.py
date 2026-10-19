@@ -48,7 +48,7 @@ class WorkSmartHub:
                     self.base_path,
                     "apps",
                     "integrated_timestamper",
-                    "integrated_timestamper.py",
+                    "integrated_timestamper_3frames.py",
                 ),
                 ["PIL"],
             ),
