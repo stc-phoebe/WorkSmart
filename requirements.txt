@@ -1,0 +1,11 @@
+# Python dependencies inferred from environment.yml and main.py.
+# Additional Integrated Timestamper dependencies have not been verified.
+#
+# Python, Tcl/Tk, and the Ghostscript executable are managed separately.
+# See README.md for installation instructions.
+
+numpy
+pandas
+opencv-python
+pillow==12.1.1
+python-barcode
